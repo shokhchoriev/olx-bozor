@@ -10,7 +10,16 @@ import os
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.secret_key = "test"
+app.config["UPLOAD_FOLDER"] = "static/rasmlar"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 db = SQLAlchemy(app)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 class Users(db.Model):
@@ -44,7 +53,43 @@ def index():
     name = session.get("name")
     if name is None:
         return redirect(url_for("login"))
-    return render_template("index.html", name=name)
+    posts = Posts.query.all()
+    user_id = session.get("user_id")
+    return render_template("index.html", name=name, posts=posts, user_id=user_id)
+
+
+@app.route("/add-post", methods=['GET', "POST"])
+def post_create():
+    if request.method == "GET":
+        return render_template("post-create.html")
+    else:
+        title = request.form.get("title")
+        info = request.form.get("info")
+        price = request.form.get("price")
+        user_id = session.get("user_id")
+        file = request.files.get('image')
+        if user_id is None:
+            return redirect(url_for("login"))
+        if not file or file.filename == '':
+            return "Fayl tanlanmagan!"
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        try:
+            post = Posts(
+                title=title,
+                info=info,
+                price=price,
+                user_id=user_id,
+                image_url=filename
+            )
+            db.session.add(post)
+            db.session.commit()
+        except:
+            pass
+        return redirect(url_for("index"))
+
 
 
 @app.route("/login", methods=['GET', "POST"])
