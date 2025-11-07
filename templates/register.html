@@ -1,0 +1,17 @@
+<style>
+    input{
+        display: block:4
+        margin-bottom: 20px
+    }
+</style>
+
+<h1>Register Page</h1>
+
+<form method="post" action="{{url_for('register')}}">
+    <input type="text" name="ism" placeholder="Ism yozing...">
+    <input type="text" name="phone" placeholder="Telefon raqam yozing...">
+    <input type="password" name="parol" placeholder="Parol yozing...">
+    <button type="submit">Saqlash</button>4
+    <a href="{{url_for('login') }}">Menda account bot</a>
+
+</form>
